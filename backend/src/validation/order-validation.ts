@@ -1,7 +1,7 @@
 import { Joi, Segments, celebrate } from 'celebrate';
 
 // Схема для валидации создания заказа
-export const validateCreateOrder = celebrate({
+const validateCreateOrder = celebrate({
   [Segments.BODY]: Joi.object({
     payment: Joi.string().valid('card', 'online').required()
       .messages({
@@ -39,3 +39,5 @@ export const validateCreateOrder = celebrate({
       }),
   }),
 });
+
+export default validateCreateOrder;

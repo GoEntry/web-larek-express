@@ -1,18 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import Product from '../models/product';
-import { NotFoundError, ConflictError } from '../errors/http-errors';
+import { NotFoundError, ConflictError } from '../errors';
+import HttpStatus from '../constants/http-status';
 
 // Получение всех товаров
 export const getProducts = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const products = await Product.find({});
     // Возвращаем ответ в формате, ожидаемом фронтендом
-    return res.status(200).json({
+    return res.status(HttpStatus.OK).json({
       items: products,
       total: products.length,
     });
   } catch (error) {
     next(error);
+    return undefined;
   }
 };
 
@@ -24,9 +26,10 @@ export const getProductById = async (req: Request, res: Response, next: NextFunc
     if (!product) {
       throw new NotFoundError('Товар с указанным ID не найден');
     }
-    return res.status(200).json(product);
+    return res.status(HttpStatus.OK).json(product);
   } catch (error) {
     next(error);
+    return undefined;
   }
 };
 
@@ -50,12 +53,13 @@ export const createProduct = async (req: Request, res: Response, next: NextFunct
       price,
     });
 
-    return res.status(201).json(product);
+    return res.status(HttpStatus.CREATED).json(product);
   } catch (error) {
     // Проверка на дубликат (уникальный title)
     if (error instanceof Error && error.message.includes('E11000')) {
       return next(new ConflictError('Товар с таким названием уже существует'));
     }
     next(error);
+    return undefined;
   }
 };

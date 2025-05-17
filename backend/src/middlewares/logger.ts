@@ -14,7 +14,7 @@ if (!fs.existsSync(logsDir)) {
 // Настройка формата логирования
 const logFormat = winston.format.combine(
   winston.format.timestamp(),
-  winston.format.json()
+  winston.format.json(),
 );
 
 // Логгер запросов

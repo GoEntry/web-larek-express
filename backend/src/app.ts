@@ -4,43 +4,25 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { errors } from 'celebrate';
 
-// Импорт маршрутов
-import productRoutes from './routes/products';
-import orderRoutes from './routes/orders';
-
-// Импорт middleware обработки ошибок
-import { errorHandler } from './middlewares/error-handler';
-import { NotFoundError } from './errors/http-errors';
-
-// Импорт логгеров
+// Импорт middleware и маршрутов
+import routes from './routes';
+import errorHandler from './middlewares/error-handler';
 import { requestLogger, errorLogger } from './middlewares/logger';
 
-// Подключение middleware
+// Создание приложения Express
 const app = express();
+const PORT = 3000;
+
+// Подключение middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'))); // Раздача статических файлов
 
 // Подключение логгера запросов
 app.use(requestLogger);
 
-// Подключение к MongoDB
-mongoose.connect('mongodb://127.0.0.1:27017/weblarek')
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch((error) => {
-    console.error('Error connecting to MongoDB:', error);
-  });
-
 // Подключение маршрутов
-app.use('/product', productRoutes);
-app.use('/order', orderRoutes);
-
-// Обработка несуществующих маршрутов
-app.use((_req, _res, next) => {
-  next(new NotFoundError('Маршрут не найден'));
-});
+app.use(routes);
 
 // Подключение логгера ошибок
 app.use(errorLogger);
@@ -51,7 +33,24 @@ app.use(errors());
 // Подключение middleware обработки ошибок
 app.use(errorHandler);
 
+// Функция запуска сервера
+async function startServer() {
+  try {
+    // Дожидаемся подключения к MongoDB
+    await mongoose.connect('mongodb://127.0.0.1:27017/weblarek');
+    // eslint-disable-next-line no-console
+    console.log('Connected to MongoDB');
+    // Запускаем сервер только после успешного подключения к базе данных
+    app.listen(PORT, () => {
+      // eslint-disable-next-line no-console
+      console.log(`App listening on port ${PORT}`);
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error connecting to MongoDB:', error);
+    process.exit(1); // Выходим с кодом ошибки, если не удалось подключиться к БД
+  }
+}
+
 // Запуск сервера
-app.listen(3000, () => {
-  console.log('App listening on port 3000');
-});
+startServer();

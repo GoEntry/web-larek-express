@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { faker } from '@faker-js/faker';
 import Product from '../models/product';
-import { BadRequestError, NotFoundError } from '../errors/http-errors';
+import { BadRequestError, NotFoundError } from '../errors';
+import HttpStatus from '../constants/http-status';
 
 // Интерфейс для тела запроса создания заказа
 interface IOrderRequest {
@@ -10,7 +11,7 @@ interface IOrderRequest {
   phone: string;
   address: string;
   total: number;
-  items: string[];
+  items: string[]; // массив _id товаров
 }
 
 // Интерфейс для ответа при создании заказа
@@ -20,9 +21,16 @@ interface IOrderResponse {
 }
 
 // Создание нового заказа
-export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
+const createOrder = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { payment, email, phone, address, total, items } = req.body as IOrderRequest;
+    const {
+      payment: _payment,
+      email: _email,
+      phone: _phone,
+      address: _address,
+      total,
+      items,
+    } = req.body as IOrderRequest;
 
     // Получение товаров из базы по id
     const products = await Product.find({ _id: { $in: items } });
@@ -52,8 +60,12 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
       id: orderId,
       total,
     };
-    return res.status(201).json(response);
+
+    return res.status(HttpStatus.CREATED).json(response);
   } catch (error) {
     next(error);
+    return undefined;
   }
 };
+
+export default createOrder;
